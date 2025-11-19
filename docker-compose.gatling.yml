@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  gatling:
+    build: ./gatling
+    container_name: gatling
+    environment:
+      - BASE_URL_BACKOFFICE=http://loan-backoffice-app:8080
+      - BASE_URL_APP2=http://app2:8080
+    networks:
+      - app-net
+    volumes:
+      # Monte les résultats pour les récupérer après le test
+      - ./gatling/results:/app/target/gatling
+    command: >
+      bash -c "mvn -B gatling:test; chmod -R 755 /app/target/gatling/* && chown -R 1000:1000 /app/target/gatling"
+
+networks:
+  app-net:
+    external: false

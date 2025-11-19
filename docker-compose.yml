@@ -1,0 +1,164 @@
+version: '3.8'
+
+networks:
+  app-net:
+    driver: bridge
+
+services:
+  mysql:
+    image: mysql:8.0
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+    networks:
+      - app-net
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: backoffice_db
+      MYSQL_USER: demo
+      MYSQL_PASSWORD: demo
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql8_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    networks:
+      - app-net
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: agency_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    networks:
+     - app-net
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 1s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    container_name: rabbitmq
+    volumes:
+      - ./rabbit-init/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbit-init/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"
+
+
+
+  debezium:
+    image: quay.io/debezium/server:3.3
+    container_name: debezium
+    networks:
+      - app-net
+    environment:
+      # Configuration de la source MySQL
+      DEBEZIUM_SOURCE_CONNECTOR_CLASS: io.debezium.connector.mysql.MySqlConnector
+      DEBEZIUM_SOURCE_OFFSET_STORAGE_FILE_FILENAME: /debezium/data/offsets.dat
+      DEBEZIUM_SOURCE_DATABASE_HOSTNAME: mysql
+      DEBEZIUM_SOURCE_DATABASE_PORT: 3306
+      DEBEZIUM_SOURCE_DATABASE_USER: demo
+      DEBEZIUM_SOURCE_DATABASE_PASSWORD: demo
+      DEBEZIUM_SOURCE_DATABASE_SERVER_ID: 184055
+      DEBEZIUM_SOURCE_DATABASE_SERVER_NAME: delegated_server
+      DEBEZIUM_SOURCE_DATABASE_INCLUDE_LIST: backoffice_db
+      DEBEZIUM_SOURCE_TABLE_INCLUDE_LIST: backoffice_db.credit_application
+      DEBEZIUM_SOURCE_DATABASE_HISTORY: io.debezium.relational.history.FileDatabaseHistory
+      DEBEZIUM_SOURCE_DATABASE_HISTORY_FILE_FILENAME: /debezium/data/dbhistory.dat
+      DEBEZIUM_SOURCE_SCHEMA_HISTORY_INTERNAL: io.debezium.storage.file.history.FileSchemaHistory
+      DEBEZIUM_SOURCE_SCHEMA_HISTORY_INTERNAL_FILE_FILENAME: /debezium/data/dbhistory.dat
+      DEBEZIUM_SOURCE_TOPIC_PREFIX: delegated
+      DEBEZIUM_SOURCE_SNAPSHOT_LOCKING_MODE: none
+      DEBEZIUM_SOURCE_DECIMAL_HANDLING_MODE: double
+      DEBEZIUM_SOURCE_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      DEBEZIUM_SOURCE_VALUE_CONVERTER_SCHEMAS_ENABLE: false
+
+      # Destination RabbitMQ
+      DEBEZIUM_SINK_TYPE: rabbitmq
+      DEBEZIUM_SINK_RABBITMQ_CONNECTION_HOST: rabbitmq
+      DEBEZIUM_SINK_RABBITMQ_CONNECTION_PORT: 5672
+      DEBEZIUM_SINK_RABBITMQ_EXCHANGE: credit_changes
+      DEBEZIUM_SINK_RABBITMQ_ROUTINGKEY: credit.app
+      DEBEZIUM_SINK_RABBITMQ_SCHEMA_INCLUDE: false
+      DEBEZIUM_SINK_RABBITMQ_CONNECTION_USERNAME: guest
+      DEBEZIUM_SINK_RABBITMQ_CONNECTION_PASSWORD: guest
+
+      # Simplification du message
+      DEBEZIUM_TRANSFORMS: unwrap
+      DEBEZIUM_TRANSFORMS_UNWRAP_TYPE: io.debezium.transforms.ExtractNewRecordState
+      DEBEZIUM_TRANSFORMS_UNWRAP_DROP_TOMBSTONES: true
+
+
+    volumes:
+      - debezium_data:/debezium/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+#  syncer:
+#    build: ./syncer
+#    container_name: syncer
+#    networks:
+#      - app-net
+#    environment:
+#      RABBITMQ_HOST: rabbitmq
+#      POSTGRES_HOST: postgres
+#      POSTGRES_USER: demo
+#      POSTGRES_PASSWORD: demo
+#      POSTGRES_DB: agency_db
+#    depends_on:
+#      - rabbitmq
+#      - postgres
+
+#  agency-app:
+#    build: ./agency-app
+#    container_name: agency-app
+#    networks:
+#      - app-net
+#    ports:
+#      - "8081:8080"
+#    environment:
+#      POSTGRES_HOST: postgres
+#      POSTGRES_USER: demo
+#      POSTGRES_PASSWORD: demo
+#      POSTGRES_DB: agency_db
+#    depends_on:
+#      - postgres
+
+#  loan-backoffice-app:
+#    build: ./loan-backoffice
+#    container_name: loan-backoffice
+#    networks:
+#      - app-net
+#    ports:
+#      - "8082:8080"
+#    environment:
+#      MYSQL_HOST: mysql
+#      MYSQL_USER: demo
+#      MYSQL_PASSWORD: demo
+#      MYSQL_DB: backoffice_db
+#    depends_on:
+#      - mysql
+
+volumes:
+  mysql8_data:
+  postgres_data:
+  debezium_data:
