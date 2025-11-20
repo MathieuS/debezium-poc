@@ -7,6 +7,7 @@
         <option value="$PROJECT_DIR$/agency-app/pom.xml" />
         <option value="$PROJECT_DIR$/loan-backoffice/pom.xml" />
         <option value="$PROJECT_DIR$/gatling/pom.xml" />
+        <option value="$PROJECT_DIR$/syncer/pom.xml" />
       </list>
     </option>
   </component>

@@ -1,0 +1,31 @@
+server:
+  port: 8280
+spring:
+  application:
+    name: syncer
+
+  datasource:
+    mysql:
+      jdbcUrl: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DB:backoffice_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      username: ${MYSQL_USER:demo}
+      password: ${MYSQL_PASSWORD:demo}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+    postgres:
+      jdbcUrl: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:agency_db}
+      username: ${POSTGRES_USER:demo}
+      password: ${POSTGRES_PASSWORD:demo}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+
+  rabbitmq:
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
