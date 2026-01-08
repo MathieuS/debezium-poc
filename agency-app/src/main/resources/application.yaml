@@ -1,7 +1,7 @@
 server:
   port: 8180
 agency-app:
-  use-local-database: true
+  use-local-database: ${AGENCY_APP_LOCAL_DB:true}
 spring:
   application:
     name: agency-app
@@ -12,8 +12,8 @@ spring:
     password: ${POSTGRES_PASSWORD:demo}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+      maximum-pool-size: 30
+      minimum-idle: 5
 
   jpa:
     hibernate:

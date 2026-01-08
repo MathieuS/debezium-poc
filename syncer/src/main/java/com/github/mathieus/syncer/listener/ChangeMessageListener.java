@@ -6,9 +6,15 @@ import com.github.mathieus.syncer.dto.MysqlCreditApplicationDTO;
 import com.github.mathieus.syncer.dto.PostgresCreditApplicationDTO;
 import com.github.mathieus.syncer.service.MysqlService;
 import com.github.mathieus.syncer.service.PostgresService;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class ChangeMessageListener {
@@ -40,7 +46,20 @@ public class ChangeMessageListener {
             postgresService.upsert(PostgresCreditApplicationDTO.of(dto, nationalId));
 
         } catch (Exception e) {
-            rabbitTemplate.convertAndSend("credit_changes_error", messageJson);
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String stackTrace = sw.toString();
+
+            MessageProperties properties = new MessageProperties();
+
+            properties.setHeader("x-error-type", e.getClass().getName());
+            properties.setHeader("x-error-message", e.getMessage());
+            properties.setHeader("x-error-stacktrace", stackTrace);
+            properties.setHeader("x-failed-timestamp", System.currentTimeMillis());
+
+            Message message = new Message(messageJson.getBytes(StandardCharsets.UTF_8), properties);
+
+            rabbitTemplate.send("credit_changes_error", message);
         }
     }
 }

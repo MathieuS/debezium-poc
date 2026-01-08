@@ -2,19 +2,19 @@ package com.github.mathieus.agencyapp.controller;
 
 import com.github.mathieus.agencyapp.adapter.BackofficeRestClient;
 import com.github.mathieus.agencyapp.dto.CreditApplicationDTO;
-import com.github.mathieus.agencyapp.dto.PageResponse;
 import com.github.mathieus.agencyapp.entity.Agency;
 import com.github.mathieus.agencyapp.entity.CreditApplication;
 import com.github.mathieus.agencyapp.mapper.CreditApplicationMapper;
 import com.github.mathieus.agencyapp.repository.AgencyRepository;
 import com.github.mathieus.agencyapp.repository.CreditApplicationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +23,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/credit-applications")
 public class CreditApplicationController {
+
+
+    private static final Logger log = LoggerFactory.getLogger(CreditApplicationController.class);
 
     @Autowired
     private CreditApplicationRepository creditApplicationRepository;
@@ -35,6 +38,10 @@ public class CreditApplicationController {
 
     @Value("${agency-app.use-local-database:false}")
     private boolean useLocalDatabase;
+
+    public CreditApplicationController() {
+        log.info("Starting Agency app with agency-app.use-local-database={}", useLocalDatabase);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<CreditApplicationDTO> getById(@PathVariable Long id) {

@@ -3,8 +3,6 @@ package com.github.mathieus.agencyapp.adapter;
 import com.github.mathieus.agencyapp.dto.CreditApplicationDTO;
 import com.github.mathieus.agencyapp.dto.PageResponse;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +17,8 @@ public class BackofficeRestClient {
 
     public BackofficeRestClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        // TODO : dynamiser pour docker compose
-        this.baseUrl = "http://localhost:8080/credit-applications";
+        // TODO : dynamiser pour docker compose/mvn
+        this.baseUrl = "http://loan-backoffice-app:8280/credit-applications";
     }
 
     public CreditApplicationDTO getById(Long id) {

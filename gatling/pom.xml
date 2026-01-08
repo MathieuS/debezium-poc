@@ -20,6 +20,21 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.circe</groupId>
+      <artifactId>circe-core_2.13</artifactId>
+      <version>0.14.6</version>
+    </dependency>
+    <dependency>
+      <groupId>io.circe</groupId>
+      <artifactId>circe-generic_2.13</artifactId>
+      <version>0.14.6</version>
+    </dependency>
+    <dependency>
+      <groupId>io.circe</groupId>
+      <artifactId>circe-parser_2.13</artifactId>
+      <version>0.14.6</version>
+    </dependency>
+    <dependency>
       <groupId>io.gatling.highcharts</groupId>
       <artifactId>gatling-charts-highcharts</artifactId>
       <version>${gatling.version}</version>

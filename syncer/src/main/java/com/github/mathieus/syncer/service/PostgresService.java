@@ -27,9 +27,10 @@ public class PostgresService {
                 purpose,
                 agency_national_id,
                 status,
-                origin_last_update
+                origin_last_update,
+                last_update
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS backoffice_view.status_enum), ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS backoffice_view.status_enum), ?, NOW())
             ON CONFLICT (id) DO UPDATE SET
                 application_number = EXCLUDED.application_number,
                 applicant_name = EXCLUDED.applicant_name,
@@ -39,7 +40,8 @@ public class PostgresService {
                 purpose = EXCLUDED.purpose,
                 agency_national_id = EXCLUDED.agency_national_id,
                 status = EXCLUDED.status,
-                origin_last_update = EXCLUDED.origin_last_update;
+                origin_last_update = EXCLUDED.origin_last_update,
+                last_update = EXCLUDED.last_update;
             """;
 
     public void upsert(PostgresCreditApplicationDTO dto) {
